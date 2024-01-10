@@ -1084,6 +1084,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 async fn handle_client(mut socket: TcpStream) -> Result<(), std::io::Error> {
     let mut name_buffer: [u8; 256] = [0; 256];
+    let mut alt_buffer = [0u8; 1024];
     // Erstelle einen Puffer mit einer Größe von 1024 Bytes
     // [0; 1024] ist ein Array mit 1024 Elementen, die alle den Wert 0 haben.
     let mut buffer: [u8; 1024] = [0; 1024];
