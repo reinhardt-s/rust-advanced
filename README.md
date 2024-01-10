@@ -1161,7 +1161,7 @@ Erstelle einen TCP-Server mit folgenden Eigenschaften:
 - Jede Zahl 2..n wird überprüft, ob diese eine Primzahl ist.
 - Ist die geprüfte Zahl eine Primzahl, so wird diese zurück an den Client geschrieben.
 
-Verbindungsaufbau: `nc 127.0.0.1 8080'
+Verbindungsaufbau: `nc 127.0.0.1 8080`
 Dann Obergrenze übermitteln: `2800014`
 
 
