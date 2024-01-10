@@ -489,6 +489,17 @@ fn main() {
 Erstelle ein Makro, anhand einer Bedingung, eines Enums entscheidet, wie der Log-Text aussehen soll.
 
 ```rust
+enum LogLevel {
+    INFO,
+    WARN,
+    ERROR,
+}
+/*
+    Bei INFO soll der Text ohne Level ausgegeben werden.
+    Bei WARN soll der Text mit dem Level WARN ausgegeben werden.
+    Bei ERROR soll der Text mit dem Level ERROR ausgegeben werden.
+*/
+
 ...
 ```
 
