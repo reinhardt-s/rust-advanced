@@ -1312,10 +1312,10 @@ https://rust-lang-nursery.github.io/rust-cookbook/database/sqlite.html
 
 **Challenge:**  
 Wir, das Tierheim Flauschfell, gehen eine Kooperagtion mit dem Swagger-Petshop ein.
-In unserer Datenbank befinden sich zur Zeit drei Tiere:
-Alex, Kategorie: Hund, Tags: ("klein"), ("zutraulich")
-Sydney, Kategorie: Katze, Tags: ("mopsig"), ("zutraulich"), ("Hinterhältig")
-Stewie, Kategorie: Meerschwein, Tags: ("ruhig"), ("kinderscheu")
+In unserer Datenbank befinden sich zur Zeit drei Tiere:  
+**Alex**, Kategorie: Hund, Tags: ("klein"), ("zutraulich")  
+**Sydney**, Kategorie: Katze, Tags: ("mopsig"), ("zutraulich"), ("Hinterhältig")  
+**Stewie**, Kategorie: Meerschwein, Tags: ("ruhig"), ("kinderscheu")  
 
 Implementiere folgene Funktionen:  
 `add_pet(...)`: wenn ein neues Haustier im Tierheim abgegeben wird, so wird dieses in der Datenbank, sowie im Petstore angelegt.  
