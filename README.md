@@ -1331,5 +1331,5 @@ Erstelle eine GUI, welche die Haustiere aus der Datenbank anzeigt und es ermögl
 - Embedded
 - https://doc.rust-lang.org/reference/linkage.html
 - Lifetime - Code verstehen: https://doc.rust-lang.org/rust-by-example/scope/lifetime.html
-
+- Cone vs Copy
 
