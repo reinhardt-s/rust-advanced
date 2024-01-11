@@ -1329,6 +1329,7 @@ Erstelle eine GUI, welche die Haustiere aus der Datenbank anzeigt und es ermögl
 - (Web-Frameworks für Rust im Vergleich (Rocket & Co))
 - (Rust Entwicklung mit Actix Web)
 - Embedded
+- https://doc.rust-lang.org/reference/linkage.html
 - Lifetime - Code verstehen: https://doc.rust-lang.org/rust-by-example/scope/lifetime.html
 
 
