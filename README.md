@@ -1301,8 +1301,8 @@ https://rust-lang-nursery.github.io/rust-cookbook/web/clients/requests.html
 https://dev.to/pintuch/rust-reqwest-examples-10ff
 
 **Challenge:**  
-Nutze reqwest und serde um drei verschiedene Haustiere im Store anzulegen.
-Lese anschließend mit der erzeugten ID die Haustiere wieder aus.
+Nutze reqwest und serde um drei verschiedene Haustiere im Store anzulegen.  
+Lese anschließend mit der erzeugten ID die Haustiere wieder aus.   
 
 https://petstore3.swagger.io/
 
@@ -1311,7 +1311,17 @@ https://petstore3.swagger.io/
 https://rust-lang-nursery.github.io/rust-cookbook/database/sqlite.html
 
 **Challenge:**  
-Passe den Code aus der vorherigen Challenge an, sodass die Daten in einer SQLite Datenbank gespeichert werden.
+Wir, das Tierheim Flauschfell, gehen eine Kooperagtion mit dem Swagger-Petshop ein.
+In unserer Datenbank befinden sich zur Zeit drei Tiere:
+Alex, Kategorie: Hund, Tags: ("klein"), ("zutraulich")
+Sydney, Kategorie: Katze, Tags: ("mopsig"), ("zutraulich"), ("Hinterhältig")
+Stewie, Kategorie: Meerschwein, Tags: ("ruhig"), ("kinderscheu")
+
+Implementiere folgene Funktionen:
+`add_pet(...)`: wenn ein neues Haustier im Tierheim abgegeben wird, so wird dieses in der Datenbank, sowie im Petstore angelegt.  
+`remove_pet(...)`: entfernt das Haustier aus der Datenbank, nicht jedoch vom Petstore.  
+`show_all_pets(...)`: gibt alle Haustiere aus der Datenbank aus.
+`show_pets_with_tag`: gibt alle Haustiere aus, die einen angegebenen Tag haben.
 
 # GUI
 https://slint.dev/releases/1.3.2/docs/tutorial/rust/introduction
@@ -1331,5 +1341,5 @@ Erstelle eine GUI, welche die Haustiere aus der Datenbank anzeigt und es ermögl
 - Embedded
 - https://doc.rust-lang.org/reference/linkage.html
 - Lifetime - Code verstehen: https://doc.rust-lang.org/rust-by-example/scope/lifetime.html
-- Cone vs Copy
+- Clone vs Copy
 
