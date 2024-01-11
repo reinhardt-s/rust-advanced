@@ -1166,6 +1166,161 @@ Verbindungsaufbau: `nc 127.0.0.1 8080`
 Dann Obergrenze übermitteln: `2800014`
 
 
+# Actix Web
+https://actix.rs/docs/getting-started
+
+https://serde.rs/derive.html
+https://docs.rs/serde_json/latest/serde_json/
+
+
+Actix Web ist ein leistungsstarkes, pragmatisches und extrem schnelles Web-Framework für Rust. Es ist bekannt für seine Geschwindigkeit und seine Fähigkeit, eine hohe Anzahl von Anfragen pro Sekunde zu bewältigen. Actix Web wird oft für die Entwicklung von hochperformanten Web-Anwendungen und APIs verwendet. Hier sind einige Schlüsselaspekte von Actix Web:
+
+**Leistungsstärke und Geschwindigkeit** 
+Actix Web basiert auf dem Actix-Aktor-Framework, das eine hohe Konkurrenzfähigkeit und Effizienz bietet.
+Es ist eines der schnellsten Web-Frameworks in Rust und wird oft in Benchmarks hervorgehoben.
+
+**Typsicherheit** 
+Als Rust-Framework profitiert Actix Web von der strengen Typsicherheit und Kompilierzeitprüfungen von Rust, was zu sichererem und robusterem Code führt.
+
+**Einfach zu bedienen**  
+Actix Web bietet eine einfache und intuitive API, die das Erstellen von Webservern und -anwendungen erleichtert.
+Es unterstützt verschiedene Middleware, Router und Request-Handler, die die Entwicklung vereinfachen.
+
+**Flexibilität**  
+Das Framework ist flexibel und erweiterbar. Es lässt sich gut mit anderen Rust-Bibliotheken und -Tools kombinieren.
+Es unterstützt WebSockets, Server-Sent Events, und andere moderne Web-Technologien.
+
+## Installation
+
+Für die aktuelle Major Version von Actix (4) empfiehlt sich rust auf den neusten Stand zu bringen, da es sonst zu Problemen mit Abhängigkeiten kommen kann.
+
+```bash
+rustup update
+cargo new actix_web_app
+cd actix_web_app
+```
+
+_Cargo.toml_:
+
+```toml
+...
+[dependencies]
+actix-web = "4"
+```
+
+```rust
+// Importieren notwendiger Module und Typen aus der actix_web-Bibliothek.
+use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+
+// Definiert eine asynchrone Handler-Funktion `hello` für GET-Anfragen an die Wurzelroute ("/").
+#[get("/")]
+async fn hello() -> impl Responder {
+    // Sendet eine HTTP-Antwort mit dem Statuscode 200 (OK) und dem Textkörper "Hello world!".
+    HttpResponse::Ok().body("Hello world!")
+}
+
+// Definiert eine asynchrone Handler-Funktion `echo` für POST-Anfragen an die Route "/echo".
+#[post("/echo")]
+async fn echo(req_body: String) -> impl Responder {
+    // Sendet eine HTTP-Antwort mit dem Statuscode 200 (OK) und gibt den Anfrage-Textkörper zurück.
+    HttpResponse::Ok().body(req_body)
+}
+
+// Definiert eine weitere asynchrone Handler-Funktion `manual_hello`.
+async fn manual_hello() -> impl Responder {
+    // Sendet eine HTTP-Antwort mit dem Statuscode 200 (OK) und dem Textkörper "Hey there!".
+    HttpResponse::Ok().body("Hey there!")
+}
+
+// Markiert die Hauptfunktion als asynchronen Einstiegspunkt für Actix Web.
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    // Erstellt und startet einen neuen HTTP-Server.
+    HttpServer::new(|| {
+        // Erstellt eine neue Actix-App.
+        App::new()
+            // Fügt den `hello`-Handler als Service für GET-Anfragen hinzu.
+            .service(hello)
+            // Fügt den `echo`-Handler als Service für POST-Anfragen hinzu.
+            .service(echo)
+            // Definiert eine Route "/hey" und setzt `manual_hello` als Handler für GET-Anfragen.
+            .route("/hey", web::get().to(manual_hello))
+    })
+    // Bindet den Server an die Adresse "127.0.0.1" auf Port 8080.
+    .bind(("127.0.0.1", 8080))?
+    // Startet den Server und wartet auf eingehende Verbindungen.
+    .run()
+    // Wartet auf das Ende des Servers.
+    .await
+}
+```
+
+## Threadübergreifende Variable
+
+Actix Web bietet eine Möglichkeit, threadübergreifende Variablen zu definieren, die in allen Anfragen verfügbar sind. Dies ist nützlich, um Daten zu speichern, die in allen Anfragen verwendet werden sollen, z.B. eine Datenbankverbindung.
+
+Hierzu benötigen wir etwas tieferes wissen über Mutex und Atomic References:
+
+`Mutex` steht für "mutual exclusion" und ist ein Mechanismus zur Gewährleistung des gegenseitigen Ausschlusses. Er wird verwendet, um sicherzustellen, dass nur ein Thread gleichzeitig auf die darin enthaltenen Daten zugreifen kann.
+Mutex::new(Items { ... }) erstellt einen neuen Mutex, der die Items-Struktur einschließt. Dadurch wird sichergestellt, dass der Zugriff auf Items thread-sicher ist, d.h., kein gleichzeitiger schreibender Zugriff von mehreren Threads erfolgt, was zu Datenrennen und Inkonsistenzen führen könnte.
+
+
+`Arc::new(...):`  
+`Arc` steht für "Atomic Reference Counting". Es ist ein Typ, der es ermöglicht, einen Wert sicher zwischen mehreren Threads zu teilen, indem für jeden Klon des Arc ein interner Zähler erhöht wird. Wenn alle Klone des Arc außer Betrieb genommen werden, wird der darin enthaltene Wert freigegeben.
+
+`let shared_items = Arc::new(Mutex::new(Items { ... }));`
+
+`web::Data` ist ein Actix Web-Typ, der verwendet wird, um threadübergreifende Variablen zu definieren. Es wird verwendet, um den Zugriff auf die in ihm enthaltenen Daten zu verwalten. Es ist ein generischer Typ, der den Typ der in ihm enthaltenen Daten als Parameter erwartet. 
+
+`let shared_items = web::Data::new(Arc::new(Mutex::new(create_inventory())));`
+
+**Verwenden von threadübergreifenden Variablen**
+
+```rust
+let shared_items = web::Data::new(Arc::new(Mutex::new(create_inventory())));
+
+HttpServer::new(move || {
+        App::new()
+            .app_data(web::Data::new(shared_items.clone()))
+            ...
+```
+
+**Challenge**  
+Erstelle eine Web-Api, welche folgende Eigenschaften hat:
+- Erstelle ein Inventar-Struct mit den Feldern: id, name (Anzahl)
+- /api/get/$id -> Gibt einen Eintrag mit der ID $id zurück
+- /api/get_all -> Gibt alle Einträge zurück
+- /api/add -> Fügt einen Eintrag hinzu
+- /api/delete/$id -> Löscht einen Eintrag mit der ID $id
+
+# Webrequests
+https://docs.rs/reqwest/0.11.4/reqwest/
+
+https://rust-lang-nursery.github.io/rust-cookbook/web/clients/requests.html
+
+https://dev.to/pintuch/rust-reqwest-examples-10ff
+
+**Challenge:**  
+Nutze reqwest und serde um drei verschiedene Haustiere im Store anzulegen.
+Lese anschließend mit der erzeugten ID die Haustiere wieder aus.
+
+https://petstore3.swagger.io/
+
+
+# SQL Datenbanken
+https://rust-lang-nursery.github.io/rust-cookbook/database/sqlite.html
+
+**Challenge:**  
+Passe den Code aus der vorherigen Challenge an, sodass die Daten in einer SQLite Datenbank gespeichert werden.
+
+# GUI
+https://slint.dev/releases/1.3.2/docs/tutorial/rust/introduction
+
+**Challenge:**
+Erstelle eine GUI, welche die Haustiere aus der Datenbank anzeigt und es ermöglicht neue Haustiere hinzuzufügen.
+
+
+
 - Asynchrone Programmierung +1
 - Web Assembly
 - Speichern von werten aus async threads in shared_variable
@@ -1175,3 +1330,5 @@ Dann Obergrenze übermitteln: `2800014`
 - (Rust Entwicklung mit Actix Web)
 - Embedded
 - Lifetime - Code verstehen: https://doc.rust-lang.org/rust-by-example/scope/lifetime.html
+
+
