@@ -1317,12 +1317,12 @@ Alex, Kategorie: Hund, Tags: ("klein"), ("zutraulich")
 Sydney, Kategorie: Katze, Tags: ("mopsig"), ("zutraulich"), ("Hinterhältig")
 Stewie, Kategorie: Meerschwein, Tags: ("ruhig"), ("kinderscheu")
 
-Implementiere folgene Funktionen:
+Implementiere folgene Funktionen:  
 `add_pet(...)`: wenn ein neues Haustier im Tierheim abgegeben wird, so wird dieses in der Datenbank, sowie im Petstore angelegt.  
 `remove_pet(...)`: entfernt das Haustier aus der Datenbank, nicht jedoch vom Petstore.  
-`show_all_pets(...)`: gibt alle Haustiere aus der Datenbank aus.
-`show_pets_with_tag`: gibt alle Haustiere aus, die einen angegebenen Tag haben.
-
+`show_all_pets(...)`: gibt alle Haustiere aus der Datenbank aus.  
+`show_pets_with_tag`: gibt alle Haustiere aus, die einen angegebenen Tag haben.  
+  
 # GUI
 https://slint.dev/releases/1.3.2/docs/tutorial/rust/introduction
 
