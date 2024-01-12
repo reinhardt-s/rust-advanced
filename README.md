@@ -1722,6 +1722,155 @@ fn main() {
 ```
 </details
 
+# Testing
+
+## 1. Testfunktionen
+Tests sind Rust-Funktionen, die mit dem Attribut #[test] markiert werden. Sie werden in der Regel in der gleichen Datei wie der zu testende Code oder in einer parallelen Dateistruktur unter tests-Verzeichnissen geschrieben.
+
+```rust
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn it_works() {
+        assert_eq!(2 + 2, 4);
+    }
+}
+```
+
+## 2. Assert Makros
+Rust stellt verschiedene Makros zur Überprüfung von Bedingungen bereit:
+
+assert!(expression): Prüft, ob die Ausdruck wahr ist.
+assert_eq!(left, right): Prüft auf Gleichheit.
+assert_ne!(left, right): Prüft auf Ungleichheit.
+
+### 3. Testausführung
+Tests können mit dem Befehl cargo test ausgeführt werden. Dieser Befehl kompiliert den Code im Testmodus und führt alle Funktionen aus, die mit #[test] markiert sind.
+
+### 4. Testkonfiguration
+Mit #[cfg(test)] können Sie angeben, dass ein Modul nur im Testmodus kompiliert wird, sodass die Testcode nicht in die endgültige Anwendung oder Bibliothek aufgenommen wird.
+
+### 5. Testergebnisse
+Nach der Ausführung zeigt Cargo eine Zusammenfassung der Testergebnisse an, einschließlich der Anzahl der durchgeführten Tests, der Anzahl der erfolgreichen Tests und der fehlgeschlagenen Tests.
+
+### 6. Integrationstests
+Neben Unit-Tests, die einzelne Teile des Codes testen, unterstützt Rust auch Integrationstests. Diese sind in der Regel in einem dedizierten tests-Verzeichnis und testen die Funktionalität des Codes als Ganzes.
+
+```rust
+use my_crate;
+
+#[test]
+fn it_adds_two() {
+    assert_eq!(my_crate::add_two(2), 4);
+}
+```
+
+### Beispiel
+```rust
+// calculator.rs
+
+/// Addiert zwei Zahlen und gibt das Ergebnis zurück.
+pub fn add(a: i32, b: i32) -> i32 {
+    a + b
+}
+
+/// Subtrahiert die zweite Zahl von der ersten und gibt das Ergebnis zurück.
+pub fn subtract(a: i32, b: i32) -> i32 {
+    a - b
+}
+
+/// Multipliziert zwei Zahlen und gibt das Ergebnis zurück.
+pub fn multiply(a: i32, b: i32) -> i32 {
+    a * b
+}
+
+/// Dividiert die erste Zahl durch die zweite und gibt das Ergebnis zurück.
+/// Gibt einen Fehler zurück, wenn die zweite Zahl Null ist.
+pub fn divide(a: i32, b: i32) -> Result<i32, &'static str> {
+    if b == 0 {
+        Err("Division durch Null ist nicht erlaubt.")
+    } else {
+        Ok(a / b)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_add() {
+        assert_eq!(add(1, 2), 3);
+    }
+
+    #[test]
+    fn test_subtract() {
+        assert_eq!(subtract(10, 5), 5);
+    }
+
+    #[test]
+    fn test_multiply() {
+        assert_eq!(multiply(3, 4), 12);
+    }
+
+    #[test]
+    fn test_divide_ok() {
+        assert_eq!(divide(10, 2), Ok(5));
+    }
+
+    #[test]
+    fn test_divide_by_zero() {
+        assert_eq!(divide(10, 0), Err("Division durch Null ist nicht erlaubt."));
+    }
+}
+```
+
+#### Challenge:
+
+```rust
+// library.rs
+
+pub struct Book {
+    pub title: String,
+    pub author: String,
+    pub year: u32,
+}
+
+pub struct Library {
+    books: Vec<Book>,
+}
+
+impl Library {
+    pub fn new() -> Library {
+        Library { books: Vec::new() }
+    }
+
+    pub fn add_book(&mut self, book: Book) {
+        self.books.push(book);
+    }
+
+    pub fn remove_book(&mut self, title: &str) -> Result<(), String> {
+        let index = self.books.iter().position(|b| b.title == title);
+
+        match index {
+            Some(i) => {
+                self.books.remove(i);
+                Ok(())
+            },
+            None => Err(format!("Buch mit dem Titel '{}' nicht gefunden.", title)),
+        }
+    }
+
+    pub fn get_books_by_author(&self, author: &str) -> Vec<&Book> {
+        self.books.iter().filter(|b| b.author == author).collect()
+    }
+
+    pub fn get_book_by_title(&self, title: &str) -> Option<&Book> {
+        self.books.iter().find(|b| b.title == title)
+    }
+}
+```
+
 - Asynchrone Programmierung +1
 - Web Assembly
 - Speichern von werten aus async threads in shared_variable
