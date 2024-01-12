@@ -1333,6 +1333,320 @@ Erstelle eine GUI, welche die Haustiere aus der Datenbank anzeigt und es ermögl
 # Heap / Stack
 ![Heap - Stack](Heap_Stack.png)
 
+## Copy / Clone
+
+**Copy**  
+Typischerweise implementieren kleine, einfache Typen wie Ganzzahlen (i32, u64), Booleans (bool), und Gleitkommazahlen (f32, f64) das Copy Trait.  
+Diese Typen sind in der Regel auf der Stack-Allokation beschränkt und relativ billig zu kopieren.  
+
+Kein expliziter Aufruf nötig: Du rufst niemals explizit eine Copy-Funktion auf; das Kopieren geschieht automatisch.  
+
+_Eigenschaften:_  
+Ein Typ kann Copy implementieren, wenn alle seine Teile ebenfalls Copy implementieren.  
+
+
+**Clone Trait**
+Manuelle Duplizierung: Das Clone Trait ermöglicht es einem Typ, eine Methode .clone() zu definieren, die explizit aufgerufen werden muss, um eine Kopie des Wertes zu erstellen.
+
+**Komplexere Typen:** Clone ist für komplexere Typen gedacht, insbesondere für solche, die teilweise oder ganz auf dem Heap gespeichert sind, wie Strings (String) und Vektoren (Vec<T>).  
+Die Duplizierung kann teurer sein, da sie möglicherweise eine Allokation auf dem Heap und das Kopieren von Daten erfordert.  
+
+Expliziter Aufruf: Um ein Objekt zu klonen, das Clone implementiert, rufst du die .clone() Methode explizit auf.  
+
+**Eigenschaften:**
+
+Im Gegensatz zu Copy kann Clone für nahezu jeden Typ implementiert werden, einschließlich solcher, die Ressourcen verwalten.
+
+```rust
+#[derive(Debug, Clone, Copy)] // Wir leiten Clone und Copy ab
+struct Point {
+    x: i32,
+    y: i32,
+}
+
+fn main() {
+    let point1 = Point { x: 5, y: 10 };
+    let point2 = point1; // point1 wird hier kopiert, nicht verschoben
+
+    // Beide Punkte können unabhängig voneinander verwendet werden,
+    // da point1 kopiert wurde, als point2 erstellt wurde
+    println!("point1: {:?}", point1);
+    println!("point2: {:?}", point2);
+}
+```
+
+
+# Lifetimes
+
+<details>
+  <summary>Spoiler warning</summary>
+  ```rust
+fn main() {
+    main_8();
+}
+
+// // DANGELING REFERENCE
+
+fn main_dangeling() {
+    let r: &i32;
+    {
+        let x = 5;
+        r = &x; // borrowed value does not live long enough
+    }
+    // r ist eine referenz auf x, aber x ist nicht mehr gültig
+    // Rust bemerkt dies zur Compilezeit und verhindert den Zugriff auf r
+    println!("r: {}", r);
+}
+
+fn main_dangeling_2() {
+    let x: i32 = 5;
+
+    let r: &i32 = &x;
+
+    println!("r: {}", r);
+}
+
+// Generic Lifetime Annotation (kurz: Lifetimes)
+
+// longest nimmt zwei Referenzen auf Strings und
+// gibt eine Referenz auf den längeren String zurück
+//
+// Wie kann der Borrow Checker sicherstellen, dass die
+// Rückgabe-Referenz gültig und nicht dangeling ist?
+// Was ist die Lebenszeit der Rückgabe-Referenz?
+fn longest(x: &str, y: &str) -> &str {
+    /*
+    missing lifetime specifier
+    this function's return type contains a borrowed
+    value, but the signature does not say whether
+    it is borrowed from `x` or `y`
+     */
+    if x.len() > y.len() {
+        x // x kann eine andere Lifetime haben
+    } else {
+        y // als y
+    }
+    // X und Y könnten von vielen verschiedenen Aufrufen und Scopes kommen,
+    // Der Borrow Checker kann also nicht wissen wie lange x und y leben
+}
+
+fn main_2() {
+    let string1 = String::from("abcd");
+    let string2 = String::from("xyz");
+
+    let result = longest(string1.as_str(), string2.as_str());
+    println!("The longest string is {}", result);
+}
+
+// Generic Liftime Annotations beschreiben die Beziehung
+// zwischen den Lebenszeiten von mehreren Referenzen
+// Die Lebenszeiten der Referenzen werden also nicht verändert
+// sondern nur beschrieben.
+
+// Wie bei allen Generics, werden auch Lifetime Generics
+// mit Spitzenklammern, nach dem Funktionsnamen, angegeben.
+// Sie beginnen immer mit einem Apostroph (').
+// Konventions ist es mit klein geschriebenen Buchstaben,
+// angefangen bei a zu beginnen.
+// x und y können nun beide diese Lifetime haben, ebenso wie
+// die Rückgabe-Referenz.
+
+// Syntax-Beispiele:
+// &i32        // eine Referenz
+// &'a i32     // eine Referenz mit Lifetime 'a
+// &'a mut i32 // eine mutable Referenz mit Lifetime 'a
+fn longest_2<'a>(x: &'a str, y: &'a str) -> &'a str {
+    // Die Lifetime wurde nicht verändert.
+    // Wir haben jedoch beschrieben, dass die Lifetime
+    // zwischen x, y und der Rückgabe-Referenz in Relation stehen.
+
+    // Die Rückgabe-Referenz hat nun die kleinste der beiden Lifetimes
+    if x.len() > y.len() {
+        x
+    } else {
+        y
+    }
+}
+
+fn main_3() {
+    let string1 = String::from("abcd");
+    let string2 = String::from("xyz");
+
+    let result = longest_2(string1.as_str(), string2.as_str());
+    // Da wir dem Borrow Checker nun mitgeteilt haben, dass
+    // die Rückgabe-Referenz die kleinste der beiden Lifetimes hat,
+    // kann er nun sicherstellen, dass die Rückgabe-Referenz gültig ist,
+    // indem er die Lebenszeit von string1 und string2 überprüft.
+    println!("The longest string is {}", result);
+}
+
+fn main_4() {
+    let string1 = String::from("abcd");
+
+    {
+        let string2 = String::from("xyz");
+        let result = longest_2(string1.as_str(), string2.as_str());
+        println!("The longest string is {}", result);
+    }
+}
+
+fn main_5() {
+    let string1 = String::from("abcd");
+    let result: &str;
+    {
+        let string2 = String::from("xyz");
+        result = longest_2(string1.as_str(), string2.as_str());
+        /*
+        `string2` does not live long enough
+        borrowed value does not live long enough
+         */
+    }
+    // Challenge:
+    // Löse das Problem, das der geliehene Wert nicht lange genug lebt.
+    println!("The longest string is {}", result);
+}
+
+
+fn longest_3<'a>(x: &str, y: &str) -> &'a str {
+    let result = String::from("it's a me!");
+    /*
+    cannot return value referencing local variable `result`
+    returns a value referencing data owned by the current function
+    */
+
+    // result ist eine lokale Variable, die nicht mehr gültig ist,
+    // sobald die Funktion verlassen wird.
+    result.as_str()
+}
+
+fn longest_4(x: &str, y: &str) -> String {
+    let result = String::from("it's a me!");
+
+    // Da longest_4 Ownership von result hat,
+    // kann dieser Wert zurückgegeben werden.
+    // Dazu wird die Ownership von result an die aufrufende Funktion
+    // übergeben.
+    result
+}
+
+fn main_6(){
+    let string1 = String::from("abcd");
+    let string2 = String::from("xyz");
+    let result = longest_3(string1.as_str(), string2.as_str());
+    println!("The longest string is {}", result);
+}
+
+
+
+// Lifetime Annotations in Structs
+
+// Wenn wir in structs Referenzen verwenden, müssen wir
+// auch hier die Lifetimes angeben.
+
+// Unser struc Book kann also nicht länger als 
+// die Lifetime der Referenz opening leben.
+struct Book<'a> {
+    opening: &'a str,
+}
+// missing lifetime specifier
+// expected named lifetime parameter
+
+fn main_7() {
+    let book_opening = String::from("It began with the forging of the Great Rings. Three were given to the Elves, immortal, wisest and fairest of all beings.");
+    let first_sentence = book_opening.split('.').next().expect("Could not find a '.'");
+
+    let lotr: Book = Book {
+        opening: first_sentence,
+    };
+
+    println!("The opening of the book is: {}", lotr.opening);
+
+}
+
+fn first_word<'a>(s: &'a str) -> &'a str {
+    let bytes = s.as_bytes();
+    for (i, &item) in bytes.iter().enumerate(){
+        if item == b' ' {
+            return &s[..i];
+        }
+    }
+    &s[..]
+}
+// In dieser Funktion haben wir keine Lifetime Annotationen angegeben.
+// Dennoch funktioniert die Funktion, da der Compliler die Lifetime
+// da er die drei Lifetime Elision Rules prüft.
+
+// Lifetimes von Parameter-Referenzen nennen wir Input Lifetimes.
+// Lifetimes von Rückgabe-Referenzen nennen wir Output Lifetimes.
+
+// Lifetime Elision Rules:
+// 1. Jeder Parameter, der eine Referenz ist, bekommt eine eigene Lifetime.
+// 2. Wenn es nur einen Input Lifetime gibt, wird dieser Lifetime
+//    für alle Output Lifetimes verwendet.
+// 3. Wenn es mehrere Input Lifetimes gibt, jedoch eine davon &self oder &mut self ist,
+//    wird die Lifetime von self für alle Output Lifetimes verwendet.
+// fn no_ticks_first_word(s: &str) -> &str {
+//     let bytes = s.as_bytes();
+//     for (i, &item) in bytes.iter().enumerate(){
+//         if item == b' ' {
+//             return &s[..i];
+//         }
+//     }
+//     &s[..]
+// }
+
+
+// Da Lifetime Annotations Generics sind,
+// müssen wir bei einer Implementierung,
+// <'a> hintert impl und nach dem Structnamen angeben.
+impl <'a> Book<'a> {
+    /*
+    implicit elided lifetime not allowed here
+    expected lifetime parameter
+     */
+//                 'a     'b                    - Regel 1: Jeder Parameter bekommt eine eigene Lifetime
+//                |      |                 'a   - Regel 3: Da self eine Lifetime hat, wird diese für alle Output Lifetimes verwendet.
+    fn get_opening(&self, intro: &str) -> &str {
+        println!("{}", intro);                     
+        self.opening
+    }
+}
+
+
+
+
+// STATIC
+
+
+// Static Lifetime heißt, dass die Referenz für die gesamte Laufzeit des Programms gültig ist.
+// Alle String Literale haben die Lifetime 'static.
+fn main_8() {
+    let refr: &str;
+    // let refr2: &i32;
+    // let refr3: &i32;
+    {
+        let x = 7;
+        let y: &'static i32 = &17;
+        let s: &'static str = "I am a static string with a static lifetime";
+        let st: String = "I am also String with a static lifetime".to_string();
+        refr = s;
+        // refr2 = &x;
+        // refr3 = y;
+
+        /*
+        `x` does not live long enough
+            borrowed value does not live long enough
+         */
+    }
+    println!("{}", refr);
+    // println!("{}", refr2);
+    // println!("{}", refr3);
+}
+
+  ```
+  
+</details>
+
 - Asynchrone Programmierung +1
 - Web Assembly
 - Speichern von werten aus async threads in shared_variable
