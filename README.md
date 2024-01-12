@@ -1379,13 +1379,14 @@ fn main() {
 # Lifetimes
 
 <details>
-  <summary>Spoiler warning</summary>
-  ```rust
+  <summary>Code Beispiele</summary>
+    
+  ```rust  
 fn main() {
     main_8();
 }
 
-// // DANGELING REFERENCE
+// DANGELING REFERENCE
 
 fn main_dangeling() {
     let r: &i32;
@@ -1585,15 +1586,15 @@ fn first_word<'a>(s: &'a str) -> &'a str {
 //    für alle Output Lifetimes verwendet.
 // 3. Wenn es mehrere Input Lifetimes gibt, jedoch eine davon &self oder &mut self ist,
 //    wird die Lifetime von self für alle Output Lifetimes verwendet.
-// fn no_ticks_first_word(s: &str) -> &str {
-//     let bytes = s.as_bytes();
-//     for (i, &item) in bytes.iter().enumerate(){
-//         if item == b' ' {
-//             return &s[..i];
-//         }
-//     }
-//     &s[..]
-// }
+ fn no_ticks_first_word(s: &str) -> &str {
+     let bytes = s.as_bytes();
+     for (i, &item) in bytes.iter().enumerate(){
+         if item == b' ' {
+             return &s[..i];
+         }
+     }
+     &s[..]
+ }
 
 
 // Da Lifetime Annotations Generics sind,
