@@ -1650,6 +1650,7 @@ fn main_8() {
 
 <details>
   <summary>Challenge</summary>
+    
 ```rust
 struct Book {
     title: &str,
