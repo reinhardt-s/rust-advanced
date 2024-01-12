@@ -1330,6 +1330,8 @@ https://slint.dev/releases/1.3.2/docs/tutorial/rust/introduction
 Erstelle eine GUI, welche die Haustiere aus der Datenbank anzeigt und es ermöglicht neue Haustiere hinzuzufügen.
 
 
+# Heap / Stack
+![Heap - Stack](Heap_Stack.png)
 
 - Asynchrone Programmierung +1
 - Web Assembly
