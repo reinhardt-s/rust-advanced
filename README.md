@@ -723,6 +723,194 @@ fn calc(calories_per_bite: i32, bites: i32) -> i32 {
 }
 ```
 
+# Smart Pointer
+
+## `Box<T>`
+
+Box<T> ist ein "Smart Pointer" in Rust, der es ermöglicht, Werte auf dem Heap zu speichern anstatt auf dem Stack.
+
+### Hintergrund
+In Rust werden Variablen standardmäßig auf dem Stack gespeichert. Der Stack ist ein schneller Speicherbereich, der jedoch eine begrenzte Größe hat und für einfache, bekannte Datengrößen verwendet wird. Wenn du jedoch größere oder dynamischere Datenstrukturen (wie sehr große Arrays oder rekursive Strukturen) verwalten möchtest, könnte der Stack nicht ausreichen. Hier kommt der Heap ins Spiel.
+
+Der Heap ist ein größerer Speicherbereich, der jedoch langsamer ist, da Speicher dort dynamisch (zur Laufzeit) zugewiesen und verwaltet wird. Wenn du einen Wert auf dem Heap speichern möchtest, verwendest du in Rust typischerweise einen Box<T>, der einen Zeiger auf den Speicherort im Heap darstellt.
+
+Eigenschaften von Box<T>:
+Heap-Speicherung: `Box<T>` speichert den Wert auf dem Heap, während der Box selbst (also der Zeiger) auf dem Stack bleibt.
+
+**Ownership:** Wie alle Daten in Rust besitzt der Box den Wert, den er speichert. Wenn der Box aus dem Gültigkeitsbereich fällt, wird der Wert im Heap automatisch freigegeben, um Speicherlecks zu vermeiden.
+
+**Dereferenzierung:** Auf den Wert, welcher in `Box`gehalten wird, kann über den Dereferenzierungsoperator `*` zugegriffen werden.
+
+**Speichersicher:** Box übernimmt die Speicherverwaltung für den Wert im Heap, sodass wir uns nicht um manuelle Speicherfreigabe kümmern müssen.
+
+### Anwendungsbeispiel
+Binärbäume sind eine weit verbreitete Datenstruktur, die in vielen Algorithmen verwendet wird, wie z.B. in Suchalgorithmen oder zum Sortieren von Daten.
+
+Da Rust nicht erlaubt, dass eine rekursive Datenstruktur direkt ihre eigene Größe zur Kompilierungszeit bestimmt, benötigen wir Box, um das Problem zu umgehen. Mit Box können wir die Rekursion auf dem Heap speichern, sodass Rust die Struktur ordnungsgemäß verwalten kann.
+
+*Siehe auch: https://hackernoon.com/how-to-insert-binary-tree-in-rust*
+
+```rust
+use std::cmp::Ordering;
+
+#[derive(Debug, Clone)]
+enum BinaryTree {
+    Empty,
+    Node(i32, Box<BinaryTree>, Box<BinaryTree>),
+}
+
+impl BinaryTree {
+    // Neues leeres Blatt erstellen
+    fn new() -> BinaryTree {
+        BinaryTree::Empty
+    }
+
+    // Einen Wert in den Baum einfügen
+    fn insert(self, value: i32) -> BinaryTree {
+        let s = self.clone();
+        match self {
+            BinaryTree::Empty => BinaryTree::Node(value, Box::new(BinaryTree::Empty), Box::new(BinaryTree::Empty)),
+            BinaryTree::Node(v, left, right) => {
+                match value.cmp(&v) {
+                    Ordering::Less => BinaryTree::Node(v, Box::new(left.insert(value)), right),
+                    Ordering::Greater => BinaryTree::Node(v, left, Box::new(right.insert(value))),
+                    Ordering::Equal => s,
+                }
+            }
+        }
+    }
+
+    // Überprüfen, ob ein Wert im Baum enthalten ist
+    fn contains(&self, value: i32) -> bool {
+        match self {
+            BinaryTree::Empty => false,
+            BinaryTree::Node(v, left, right) => {
+                match value.cmp(&v) {
+                    Ordering::Less => left.contains(value),
+                    Ordering::Greater => right.contains(value),
+                    Ordering::Equal => true,
+                }
+            }
+        }
+    }
+
+}
+
+fn main() {
+    let mut tree = BinaryTree::new();
+
+    tree = tree.insert(10);
+    tree = tree.insert(5);
+    tree = tree.insert(15);
+    tree = tree.insert(2);
+
+    println!("Baumstruktur: {:?}", tree);
+    println!("Enthält 10? {}", tree.contains(10));
+    println!("Enthält 7? {}", tree.contains(7));
+}
+
+```
+
+## `Arc<T>`
+In Rust ist der Umgang mit Speicher und Ownership eine zentrale Komponente, die das Programmieren sicherer und fehlerfreier macht. Eine besondere Herausforderung tritt auf, wenn wir mehrere Threads haben, die gleichzeitig auf denselben Datenwert zugreifen müssen. Hier kommt Arc<T> ins Spiel, ein Smart Pointer, der thread-sichere Referenzzählung ermöglicht.
+
+### Was ist Arc<T>?
+Arc<T> steht für Atomic Reference Counting. Es ist ein Typ in Rust, der es erlaubt, einen Wert auf dem Heap zu speichern und diesen Wert sicher zwischen mehreren Threads zu teilen. Im Gegensatz zu Rc<T>, das nur in Single-Thread-Umgebungen verwendet werden kann, ist Arc<T> speziell für den Einsatz in Multi-Thread-Umgebungen gedacht.
+
+Arc<T> bietet die Möglichkeit, **mehrere Besitzer für einen Wert** zu haben, und stellt sicher, dass der Wert so lange am Leben bleibt, wie mindestens eine Referenz auf ihn existiert. Wenn die letzte Referenz verschwindet, wird der Wert automatisch freigegeben.
+
+### Wann wird Arc<T> verwendet?
+Daten zwischen Threads teilen: Wenn du Daten sicher zwischen mehreren Threads teilen möchtest, ist Arc<T> das richtige Werkzeug.
+Thread-sichere Referenzzählung: Arc<T> verwendet atomare Operationen, um sicherzustellen, dass Referenzzählungen in Multi-Thread-Umgebungen sicher sind.
+Unveränderliche Daten: Wenn du Daten in einer geteilten, aber unveränderlichen Form bereitstellen möchtest, eignet sich Arc<T> perfekt. Sollten die Daten veränderlich sein, kannst du dies mit zusätzlichen Konstrukten wie Mutex<T> oder RwLock<T> erreichen.
+
+## `Mutex`
+Ein Mutex (Abkürzung für "Mutual Exclusion") ist ein Synchronisationsprimitiv, das verwendet wird, um den gleichzeitigen Zugriff auf gemeinsam genutzte Daten in Multithreading-Umgebungen zu verhindern. In Rust ermöglicht ein Mutex<T> es, einen geteilten Wert von mehreren Threads aus sicher zu bearbeiten, indem immer nur ein Thread zu einer Zeit auf die Daten zugreifen kann. Das Konzept des Mutex basiert darauf, dass er gesperrt (locked) und entsperrt (unlocked) wird, sodass andere Threads warten müssen, bis der Mutex freigegeben wird, bevor sie auf die Daten zugreifen können.
+
+### Grundlagen eines Mutex<T>
+**Exklusiver Zugriff:** Ein Mutex gewährt einem einzigen Thread exklusiven Zugriff auf die umschlossenen Daten. Wenn ein Thread den Mutex sperrt, können andere Threads erst dann auf die Daten zugreifen, wenn der Mutex entsperrt wird.
+
+**Thread-Sicherheit:** Der Mutex sorgt dafür, dass nur ein Thread gleichzeitig die geschützten Daten modifizieren kann. Dies verhindert Datenrennen, die auftreten könnten, wenn mehrere Threads gleichzeitig versuchen, dieselben Daten zu verändern.
+
+**Deadlock:** Ein Deadlock kann auftreten, wenn ein Mutex nicht korrekt verwaltet wird. Ein Deadlock ist eine Situation, in der zwei oder mehr Threads sich gegenseitig blockieren, weil sie auf Ressourcen warten, die von den jeweils anderen gehalten werden.
+
+
+###Beispiel
+**Gemeinsame Nutzung von Daten zwischen Threads:**
+```rust
+use std::sync::{Arc, Mutex};
+use std::thread;
+
+
+fn move_last_to_front(data: Arc<Mutex<Vec<i32>>>) {
+    let mut vec = data.lock().unwrap();  // Sperren des Mutex, um exklusiven Zugriff zu erhalten
+
+    if let Some(last) = vec.pop() {  // Das letzte Element entfernen
+        vec.insert(0, last);  // Das entfernte Element an den Anfang setzen
+    }
+
+    println!("Thread: {:?}", vec);  // Den Vec drucken
+}
+
+
+fn main() {
+    // Erstelle einen Arc, der einen Vektor auf dem Heap speichert
+    let data = Arc::new(Mutex::new(vec![1, 2, 3, 4, 5]));
+
+    // Klone das Arc, um es in einen neuen Thread zu verschieben
+    let data_for_thread = Arc::clone(&data);
+
+    
+    let data_for_thread_1 = Arc::clone(&data);
+    let data_for_thread_2 = Arc::clone(&data);
+
+    // Erstelle den ersten Thread
+    let handle1 = thread::spawn(move || {
+        move_last_to_front(data_for_thread_1);
+    });
+
+    // Erstelle den zweiten Thread
+    let handle2 = thread::spawn(move || {
+        move_last_to_front(data_for_thread_2);
+    });
+
+    // Warte auf beide Threads, bevor das Programm endet
+    handle1.join().unwrap();
+    handle2.join().unwrap();
+    
+
+    // Erstelle einen neuen Thread
+    let handle = thread::spawn(move || {
+        // Im neuen Thread auf die Daten zugreifen
+        data_for_thread.lock().unwrap().push(6);
+        println!("Thread: {:?}", data_for_thread);
+    });
+
+    // Im Hauptthread auf die Daten zugreifen
+    println!("Main thread: {:?}", data);
+
+    // Warte auf den anderen Thread, bevor das Programm endet
+    handle.join().unwrap();
+}
+```
+<div style="border: 1px solid #007ACC; background-color: #F0F8FF35; padding: 10px; border-radius: 5px;">
+
+**Info:**  _Warum wird eine Closure in thread::spawn verwendet?_
+
+Der Aufruf von thread::spawn startet einen neuen Thread und benötigt als Argument eine Funktion oder Closure, die im neuen Thread ausgeführt werden soll.
+
+
+* Die Closure kann auf Variablen zugreifen, die außerhalb der Closure definiert wurden, wie z.B. data_for_thread. Das macht es einfach, Daten in den neuen Thread zu übergeben, ohne dass diese Daten explizit als Parameter an eine Funktion übergeben werden müssen.
+
+* Da Closures auf lokale Variablen zugreifen können, ist es möglich, sehr flexibel zu arbeiten. Wir können entscheiden, welche Daten der Thread benötigt, und diese Daten direkt in die Closure einbeziehen.
+
+* Durch das Verwenden des move-Schlüsselworts in der Closure wird der Besitz (Ownership) von Variablen, die innerhalb der Closure verwendet werden, in die Closure selbst übertragen. Das ist besonders wichtig in Multithreading-Kontexten, da Rust sicherstellen muss, dass keine Datenrennen auftreten. Das move-Schlüsselwort bewirkt, dass alle verwendeten Variablen in den neuen Thread verschoben werden, wodurch der Hauptthread keine Kontrolle mehr über diese Variablen hat. Dadurch wird verhindert, dass beide Threads gleichzeitig auf dieselben Daten zugreifen.
+</div>
+
+
+
+
+
 # Asynchrone Programmierung
 
 Asynchrone Funktionen in Rust sind ein leistungsstarkes Werkzeug, um gleichzeitig mehrere Aufgaben effizient zu bewältigen, besonders bei Operationen, die auf externe Ressourcen warten müssen, wie Netzwerkanfragen oder Dateioperationen. Ich erkläre es dir Schritt für Schritt:
