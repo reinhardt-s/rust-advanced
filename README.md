@@ -810,6 +810,16 @@ fn main() {
 }
 
 ```
+# Asynchrone Programmierung
+Asynchrone Funktionen in Rust sind ein leistungsstarkes Werkzeug, um gleichzeitig mehrere Aufgaben effizient zu bewältigen, besonders bei Operationen, die auf externe Ressourcen warten müssen, wie Netzwerkanfragen oder Dateioperationen. Ich erkläre es dir Schritt für Schritt:
+
+**Was sind asynchrone Funktionen?**
+
+Asynchrone Funktionen ermöglichen es deinem Programm, andere Aufgaben fortzusetzen, während es auf das Abschließen einer langwierigen Operation wartet. Im Gegensatz zu synchronem Code, der blockiert und das gesamte Programm anhält, bis eine Aufgabe abgeschlossen ist, kann asynchroner Code im Hintergrund laufen, während der Hauptteil deines Programms weiterarbeitet.
+
+**Warum Rust für asynchrone Programmierung verwenden?**
+
+Rust bietet durch sein Memorysicherheitsmodell und seine Concurrency-Fähigkeiten eine robuste Grundlage für asynchrone Programmierung. Das bedeutet, dass man gleichzeitig hohe Leistung und Sicherheit bekommt.
 
 ## `Arc<T>`
 In Rust ist der Umgang mit Speicher und Ownership eine zentrale Komponente, die das Programmieren sicherer und fehlerfreier macht. Eine besondere Herausforderung tritt auf, wenn wir mehrere Threads haben, die gleichzeitig auf denselben Datenwert zugreifen müssen. Hier kommt Arc<T> ins Spiel, ein Smart Pointer, der thread-sichere Referenzzählung ermöglicht.
@@ -835,7 +845,7 @@ Ein Mutex (Abkürzung für "Mutual Exclusion") ist ein Synchronisationsprimitiv,
 **Deadlock:** Ein Deadlock kann auftreten, wenn ein Mutex nicht korrekt verwaltet wird. Ein Deadlock ist eine Situation, in der zwei oder mehr Threads sich gegenseitig blockieren, weil sie auf Ressourcen warten, die von den jeweils anderen gehalten werden.
 
 
-###Beispiel
+### Beispiel
 **Gemeinsame Nutzung von Daten zwischen Threads:**
 ```rust
 use std::sync::{Arc, Mutex};
@@ -909,20 +919,6 @@ Der Aufruf von thread::spawn startet einen neuen Thread und benötigt als Argume
 
 
 
-
-
-# Asynchrone Programmierung
-
-Asynchrone Funktionen in Rust sind ein leistungsstarkes Werkzeug, um gleichzeitig mehrere Aufgaben effizient zu bewältigen, besonders bei Operationen, die auf externe Ressourcen warten müssen, wie Netzwerkanfragen oder Dateioperationen. Ich erkläre es dir Schritt für Schritt:
-
-**Was sind asynchrone Funktionen?**
-
-Asynchrone Funktionen ermöglichen es deinem Programm, andere Aufgaben fortzusetzen, während es auf das Abschließen einer langwierigen Operation wartet. Im Gegensatz zu synchronem Code, der blockiert und das gesamte Programm anhält, bis eine Aufgabe abgeschlossen ist, kann asynchroner Code im Hintergrund laufen, während der Hauptteil deines Programms weiterarbeitet.
-
-**Warum Rust für asynchrone Programmierung verwenden?**
-
-Rust bietet durch sein Memorysicherheitsmodell und seine Concurrency-Fähigkeiten eine robuste Grundlage für asynchrone Programmierung. Das bedeutet, dass man gleichzeitig hohe Leistung und Sicherheit bekommt.
-
 ## Grundkonzepte:
 
 **Futures:** Eine Future in Rust ist eine Art Platzhalter für einen Wert, der irgendwann in der Zukunft verfügbar sein könnte. Futures sind das Rückgrat der asynchronen Programmierung in Rust.
@@ -992,6 +988,21 @@ async fn main() {
 ```
 
 > `await` ist ein Schlüsselwort, das die Ausführung der aktuellen Funktion unterbricht, bis die Future bereit ist, und sie dann fortsetzt.
+
+### Futures
+
+Eine Future in Rust ist eine Art Platzhalter für einen Wert, der irgendwann in der Zukunft verfügbar sein könnte. Futures sind das Rückgrat der asynchronen Programmierung in Rust.
+
+**Erstellen einer Future**
+
+```rust
+use futures::future::Future;
+use futures::future::ready;
+
+fn main() {
+    let future = ready(42);
+}
+```
 
 #### tokio::main-Makro
 
@@ -1174,20 +1185,7 @@ async fn main() {
 
 Infos zur macro Syntax: https://doc.rust-lang.org/reference/macros-by-example.html
 
-## Futures
 
-Eine Future in Rust ist eine Art Platzhalter für einen Wert, der irgendwann in der Zukunft verfügbar sein könnte. Futures sind das Rückgrat der asynchronen Programmierung in Rust.
-
-**Erstellen einer Future**
-
-```rust
-use futures::future::Future;
-use futures::future::ready;
-
-fn main() {
-    let future = ready(42);
-}
-```
 
 ## TCP-Listener
 
@@ -1353,6 +1351,56 @@ Erstelle einen TCP-Server mit folgenden Eigenschaften:
 Verbindungsaufbau: `nc 127.0.0.1 8080`
 Dann Obergrenze übermitteln: `2800014`
 
+# MySQL
+```rust
+use mysql::{params, prelude::Queryable, Pool};
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Verbindung zu MySQL-Datenbank aufbauen
+    let url = "mysql://root:C6jpj9XHFnqAx5dNzT7EzAFycJjzEpRHr5mD3DD5@34.82.52.39:3306/seminar";
+    let pool = Pool::new(url)?;
+    let mut conn = pool.get_conn()?;
+
+    // Einfügen eines neuen Datensatzes
+    conn.exec_drop(
+        "INSERT INTO users (name, email) VALUES (:name, :email)",
+        params! {
+            "name" => "Max Mustermann",
+            "email" => "max@mustermann.de",
+        },
+    )?;
+    
+    // Einfache SELECT-Abfrage
+    let selected_values: Vec<(u32, String)> = conn
+        .query("SELECT id, name FROM users")?;
+
+    // Ergebnisse ausgeben
+    for row in selected_values {
+        println!("ID: {}, Name: {}", row.0, row.1);
+    }
+
+    
+
+    // Aktualisieren eines Datensatzes
+    conn.exec_drop(
+        "UPDATE users SET email = :email WHERE name = :name",
+        params! {
+            "name" => "Max Mustermann",
+            "email" => "max.neu@mustermann.de",
+        },
+    )?;
+
+    // Löschen eines Datensatzes
+    conn.exec_drop(
+        "DELETE FROM users WHERE name = :name",
+        params! {
+            "name" => "Max Mustermann",
+        },
+    )?;
+
+    Ok(())
+}
+```
 
 # Actix Web
 https://actix.rs/docs/getting-started
