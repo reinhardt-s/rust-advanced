@@ -514,6 +514,8 @@ Prozedurale Makros in Rust, die Code aus Attributen generieren, sind eine mächt
 
 **Derive Macros**: Diese ermöglichen es, die derive-Anweisung für Strukturen und Enums zu erweitern, um automatisch Implementierungen für bestimmte Traits zu generieren.
 
+ Automatisches Generieren von Implementierungen für **Traits** auf benutzerdefinierte **Strukturen und Enums**.
+
 https://web.mit.edu/rust-lang_v1.25/arch/amd64_ubuntu1404/share/doc/rust/html/book/first-edition/procedural-macros.html
 
 `cargo new custom_derive_macro --lib`
@@ -549,6 +551,21 @@ pub fn my_trait_derive(input: TokenStream) -> TokenStream {
     };
 
     gen.into()
+}
+```
+
+```rust
+use custom_derive_macro::MyTrait;
+
+#[derive(MyTrait)]
+struct MyStruct {
+    id: i32,
+    name: String,
+}
+
+fn main() {
+    let instance = MyStruct { id: 1, name: "Alice".to_string() };
+    instance.my_method();
 }
 ```
 
@@ -1437,6 +1454,174 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 ```
+
+## Diesel
+
+```toml
+[dependencies]
+diesel = { version = "2.0.0", features = ["mysql", "chrono"] }
+dotenv = "0.15"
+```
+
+```bash
+cargo install diesel_cli --no-default-features --features mysql
+diesel setup
+```
+
+*.env File*
+```ini
+DATABASE_URL=mysql://username:password@ip/seminar
+```
+
+### Migration
+```bash
+diesel migration generate create_users_and_posts
+```
+
+```sql
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS posts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    content TEXT NOT NULL,
+    creator INT NOT NULL,
+    view_count INT NOT NULL DEFAULT 0,
+    FOREIGN KEY (creator) REFERENCES users(id)
+);
+
+```
+
+```sql
+DROP TABLE posts;
+DROP TABLE users;
+```
+
+```bash
+diesel migration run
+```
+
+```bash
+diesel print-schema > src/schema.rs
+```
+
+```rust
+// src/schema.rs
+
+diesel::table! {
+    posts (id) {
+        id -> Integer,
+        content -> Text,
+        creator -> Integer,
+        view_count -> Integer,
+    }
+}
+
+diesel::table! {
+    users (id) {
+        id -> Integer,
+        name -> Varchar,
+        email -> Varchar,
+    }
+}
+
+diesel::allow_tables_to_appear_in_same_query!(
+    posts,
+    users,
+);
+```
+
+```rust
+// src/models.rs
+
+use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
+
+#[derive(Queryable, Insertable, AsChangeset, Serialize, Deserialize)]
+#[diesel(table_name = users)]
+pub struct User {
+    pub id: i32,
+    pub name: String,
+    pub email: String,
+}
+
+#[derive(Queryable, Insertable, AsChangeset, Serialize, Deserialize)]
+#[diesel(table_name = posts)]
+pub struct Post {
+    pub id: i32,
+    pub content: String,
+    pub creator: i32,
+    pub view_count: i32,
+}
+```
+
+```rust
+use diesel::prelude::*;
+use diesel::mysql::MysqlConnection;
+use diesel::result::Error;
+use dotenv::dotenv;
+use std::env;
+
+mod models;
+mod schema;
+
+use self::models::{User, Post};
+use self::schema::{users, posts};
+
+fn establish_connection() -> MysqlConnection {
+    dotenv().ok();
+
+    let database_url = env::var("DATABASE_URL")
+        .expect("DATABASE_URL must be set");
+    MysqlConnection::establish(&database_url)
+        .expect(&format!("Error connecting to {}", database_url))
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let connection = &mut establish_connection();
+
+    diesel::insert_into(users::table)
+        .values((users::name.eq("Max Mustermann"), users::email.eq("max@mustermann.de")))
+        .execute(connection)?;
+
+    let results = users::table
+        .select((users::id, users::name))
+        .load::<(i32, String)>(connection)?;
+
+    for (id, name) in results {
+        println!("ID: {}, Name: {}", id, name);
+    }
+
+    diesel::update(users::table.filter(users::name.eq("Max Mustermann")))
+        .set(users::email.eq("max.neu@mustermann.de"))
+        .execute(connection)?;
+
+    diesel::delete(users::table.filter(users::name.eq("Max Mustermann")))
+        .execute(connection)?;
+
+    diesel::insert_into(posts::table)
+        .values((
+            posts::content.eq("This is a post content."),
+            posts::creator.eq(1), // assuming the creator with ID 1 exists
+            posts::view_count.eq(0),
+        ))
+        .execute(connection)?;
+
+    let post_results = posts::table
+        .select((posts::id, posts::content, posts::view_count))
+        .load::<(i32, String, i32)>(connection)?;
+
+    for (id, content, view_count) in post_results {
+        println!("Post ID: {}, Content: {}, View Count: {}", id, content, view_count);
+    }
+
+    Ok(())
+}
+```
+
 
 # Actix Web
 https://actix.rs/docs/getting-started
