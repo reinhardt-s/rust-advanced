@@ -730,9 +730,9 @@ fn calc(calories_per_bite: i32, bites: i32) -> i32 {
 Box<T> ist ein "Smart Pointer" in Rust, der es ermöglicht, Werte auf dem Heap zu speichern anstatt auf dem Stack.
 
 ### Hintergrund
-In Rust werden Variablen standardmäßig auf dem Stack gespeichert. Der Stack ist ein schneller Speicherbereich, der jedoch eine begrenzte Größe hat und für einfache, bekannte Datengrößen verwendet wird. Wenn du jedoch größere oder dynamischere Datenstrukturen (wie sehr große Arrays oder rekursive Strukturen) verwalten möchtest, könnte der Stack nicht ausreichen. Hier kommt der Heap ins Spiel.
+In Rust werden Variablen standardmäßig auf dem Stack gespeichert. Der Stack ist ein schneller Speicherbereich, der jedoch eine begrenzte Größe hat und für einfache, bekannte Datengrößen verwendet wird. Wenn man jedoch größere oder dynamischere Datenstrukturen (wie sehr große Arrays oder rekursive Strukturen) verwalten möchte, könnte der Stack nicht ausreichen. Hier kommt der Heap ins Spiel.
 
-Der Heap ist ein größerer Speicherbereich, der jedoch langsamer ist, da Speicher dort dynamisch (zur Laufzeit) zugewiesen und verwaltet wird. Wenn du einen Wert auf dem Heap speichern möchtest, verwendest du in Rust typischerweise einen Box<T>, der einen Zeiger auf den Speicherort im Heap darstellt.
+Der Heap ist ein größerer Speicherbereich, der jedoch langsamer ist, da Speicher dort dynamisch (zur Laufzeit) zugewiesen und verwaltet wird. Wenn man einen Wert auf dem Heap speichern möchte, verwendet man in Rust typischerweise einen Box<T>, der einen Zeiger auf den Speicherort im Heap darstellt.
 
 Eigenschaften von Box<T>:
 Heap-Speicherung: `Box<T>` speichert den Wert auf dem Heap, während der Box selbst (also der Zeiger) auf dem Stack bleibt.
