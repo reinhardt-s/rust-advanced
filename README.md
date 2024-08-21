@@ -514,6 +514,44 @@ Prozedurale Makros in Rust, die Code aus Attributen generieren, sind eine mächt
 
 **Derive Macros**: Diese ermöglichen es, die derive-Anweisung für Strukturen und Enums zu erweitern, um automatisch Implementierungen für bestimmte Traits zu generieren.
 
+https://web.mit.edu/rust-lang_v1.25/arch/amd64_ubuntu1404/share/doc/rust/html/book/first-edition/procedural-macros.html
+
+`cargo new custom_derive_macro --lib`
+
+```toml
+[dependencies]
+syn = "1.0"
+quote = "1.0"
+
+[lib]
+proc-macro = true
+```
+
+```rust
+extern crate proc_macro;
+use proc_macro::TokenStream;
+use quote::quote;
+use syn;
+
+#[proc_macro_derive(MyTrait)]
+pub fn my_trait_derive(input: TokenStream) -> TokenStream {
+    // Das Input-Token wird als Rust-Syntaxbaum (AST) geparst
+    let ast = syn::parse(input).unwrap();
+
+    let name = &ast.ident;
+
+    let gen = quote! {
+        impl MyTrait for #name {
+            fn my_method(&self) {
+                println!("MyTrait::my_method called for {}", stringify!(#name));
+            }
+        }
+    };
+
+    gen.into()
+}
+```
+
 **Beispiel für ein prozedurales Makro:**  
 Da die Erstellung eines prozeduralen Makros relativ komplex ist und in einer separaten Crate erfolgen muss, hier ein einfaches Beispielkonzept für ein attributähnliches Makro:
 
@@ -1106,9 +1144,7 @@ async fn tasks(a: i32, b: i32) -> Result<i32, String> {
 #[tokio::main]
 async fn main() {
     let ergebnis = tokio::join!(tasks(1, 2), tasks(3, 4));
-    for e in ergebnis {
-        println!("{}", e.unwrap());
-    }
+    println!("{:?}", ergebnis);
 }
 ```
 
