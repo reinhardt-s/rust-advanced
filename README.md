@@ -2340,3 +2340,25 @@ impl Library {
 - Lifetime - Code verstehen: https://doc.rust-lang.org/rust-by-example/scope/lifetime.html
 - Clone vs Copy
 
+# Traits erweitern
+
+```rust
+pub trait StringTools: ToString {
+    fn say_hello(&self) {
+        println!("hey");
+    }
+
+    fn say_whatever() {
+        println!("whatever");
+    }
+}
+
+impl<T> StringTools for T where T: ToString {}
+
+fn main() {
+    let x = "hey".to_string();
+    "hey".say_hello();
+    String::say_whatever();
+}
+```
+
